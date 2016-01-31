@@ -1,0 +1,19 @@
+---
+rbenv_repo: https://github.com/rbenv/rbenv.git
+rbenv_users: []
+rbenv_plugins:
+  - name: ruby-build
+    repo: https://github.com/rbenv/ruby-build.git
+  - name: rbenv-default-gems
+    repo: https://github.com/sstephenson/rbenv-default-gems.git
+  - name: rbenv-gem-rehash
+    repo: https://github.com/rbenv/rbenv-gem-rehash.git
+rbenv_ruby_dependencies:
+  - libssl-dev
+  - libyaml-dev
+  - libreadline6-dev
+  - zlib1g-dev
+  - libncurses5-dev
+  - libffi-dev
+  - libgdbm3
+  - libgdbm-dev

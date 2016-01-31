@@ -1,0 +1,61 @@
+---
+- name: install rbenv
+  git: repo={{ rbenv_repo }} dest=~/.rbenv
+  become_user: "{{ item.name }}"
+  with_items: "{{ rbenv_users }}"
+
+- name: install plugins
+  git: repo={{ item[0].repo }} dest=~/.rbenv/plugins/{{ item[0].name }}
+  become_user: "{{ item[1].name }}"
+  with_nested:
+    - "{{ rbenv_plugins }}"
+    - "{{ rbenv_users }}"
+
+- name: install ruby dependencies
+  apt: name={{ item }} state=present
+  with_items: "{{ rbenv_ruby_dependencies }}"
+
+- name: register user shells
+  stat: path=~/{{ item[0] }}
+  become_user: "{{ item[1].name }}"
+  with_nested:
+    - [".bashrc", ".zshrc"]
+    - "{{ rbenv_users }}"
+  register: user_shells
+  changed_when: false
+
+- name: add rbenv to shell config
+  lineinfile:
+    line: "{{ item[0] }} "
+    dest: ~/{{ item[1].item[0] }}
+  become_user: "{{ item[1].item[1].name }}"
+  when: item[1].stat.exists|bool and true
+  with_nested:
+    - ['export PATH="$HOME/.rbenv/bin:$PATH"', 'eval "$(rbenv init -)"']
+    - "{{ user_shells.results }}"
+
+- name: set default gems
+  lineinfile:
+    line: "{{ item[1] }}"
+    dest: ~/.rbenv/default-gems
+    create: yes
+  become_user: "{{ item[0].name }}"
+  with_subelements:
+    - rbenv_users
+    - default_gems
+
+- name: copy dotfiles
+  copy: src={{ item[0] }} dest=~/.{{ item[0] }}
+  become_user: "{{ item[1].name }}"
+  with_nested:
+    - ["gemrc"]
+    - "{{ rbenv_users }}"
+
+- name: install rubies
+  shell: ~/.rbenv/bin/rbenv install {{ item.ruby_version }}
+  become_user: "{{ item.name }}"
+  when: item.ruby_version is defined
+  with_items: "{{ rbenv_users }}"
+  notify: set default ruby
+  environment:
+    CONFIGURE_OPTS: --disable-install-doc

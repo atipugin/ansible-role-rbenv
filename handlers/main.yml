@@ -1,0 +1,6 @@
+---
+- name: set default ruby
+  shell: ~/.rbenv/bin/rbenv global {{ item.ruby_version }}
+  become_user: "{{ item.name }}"
+  when: item.ruby_version is defined
+  with_items: "{{ rbenv_users }}"
